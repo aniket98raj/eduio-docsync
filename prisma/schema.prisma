@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  schemaColumns SchemaColumn[]
+  fieldMappings FieldMapping[]
+  extractions   Extraction[]
+}
+model SchemaColumn {
+  id         String   @id @default(cuid())
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  name       String
+  label      String
+  dataType   String
+  required   Boolean  @default(false)
+  order      Int      @default(0)
+  fieldMappings FieldMapping[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([workflowId, name])
+}
+model FieldMapping {
+  id             String       @id @default(cuid())
+  workflowId     String
+  workflow       Workflow     @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  schemaColumnId String
+  schemaColumn   SchemaColumn @relation(fields: [schemaColumnId], references: [id], onDelete: Cascade)
+  anchorText     String
+  anchorBbox     String?
+  valuePosition  String       @default("right")
+  valueSearchRadius Float     @default(0.15)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@unique([workflowId, anchorText])
+}
+model Extraction {
+  id          String   @id @default(cuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  imagePath   String
+  mode        String
+  extractedData String?
+  rawOcrData  String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
